@@ -1,0 +1,83 @@
+<beans:beans xmlns="http://www.springframework.org/schema/batch"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/batch
+           http://www.springframework.org/schema/batch/spring-batch-2.2.xsd">
+
+    <!-- Imports -->
+    <beans:import resource="context.xml" />
+
+    <!-- Definición del Job -->
+
+    <job id = "miJob">
+        <step id = "step1">
+            <tasklet>
+                <chunk reader = "cvsFileItemReader" processor = "itemProcessor"
+                       writer = "mysqlItemWriter" commit-interval = "10"/>
+            </tasklet>
+        </step>
+    </job>
+
+    <!-- Definicion del Validator -->
+
+    <beans:bean id="validator"
+                class="com.ejercicios.itemProcessor.validador">
+    </beans:bean>
+
+    <!-- Item processor compuesto: validator + customProcessor -->
+    <beans:bean id="itemProcessor"
+                class="org.springframework.batch.item.support.CompositeItemProcessor">
+        <beans:property name="delegates">
+            <beans:list>
+                <beans:bean id="validatingItemProcessor" class="org.springframework.batch.item.validator.ValidatingItemProcessor">
+                    <beans:property name="filter" value="true" />
+                    <beans:property name="validator" ref="validator" />
+                </beans:bean>
+                <beans:bean id = "customItemProcessor" class = "com.ejercicios.itemProcessor.employeeProcesado"/>
+            </beans:list>
+        </beans:property>
+    </beans:bean>
+
+    <!-- Reader (CSV) -->
+    <beans:bean id = "cvsFileItemReader"
+                class = "org.springframework.batch.item.file.FlatFileItemReader">
+        <!--Se indica el archivo del que tiene que leer -->
+        <beans:property name = "resource" value = "employee.csv" />
+        <!--El linemapper define como se interpreta cada linea del archivo plano -->
+        <beans:property name = "lineMapper">
+            <beans:bean
+                    class = "org.springframework.batch.item.file.mapping.DefaultLineMapper">
+                <beans:property name = "lineTokenizer">
+                    <beans:bean
+                            class = "org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+                        <!-- Delimitador de campos-->
+                        <beans:property name = "delimiter" value = "," />
+                        <!-- Campos del archivo CSV les asignamos nombres-->
+                        <beans:property name = "names" value = "userName,
+                     userId, transactionDate, transactionAmount" />
+                    </beans:bean>
+                </beans:property>
+                <!-- Definición del mapper específico -->
+                <beans:property name = "fieldSetMapper">
+                    <beans:bean class = "com.ejercicios.itemReader.EmployeeFieldSetMapper" />
+                </beans:property>
+            </beans:bean>
+        </beans:property>
+    </beans:bean>
+    <!-- Writer (MySQL) -->
+    <beans:bean id = "mysqlItemWriter" class = "org.springframework.batch.item.database.JdbcBatchItemWriter">
+        <beans:property name = "dataSource" ref = "dataSource" />
+        <beans:property name = "sql">
+            <beans:value>
+                <![CDATA[insert into bdejercicio1.employee (userId, userName, transactionDate, transactionAmount)
+               values (:userId, :userName, :transactionDate, :transactionAmount);]]>
+            </beans:value>
+        </beans:property>
+        <beans:property name = "itemSqlParameterSourceProvider">
+            <beans:bean class = "org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider" />
+        </beans:property>
+    </beans:bean>
+</beans:beans>
