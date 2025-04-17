@@ -1,0 +1,39 @@
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:tx="http://www.springframework.org/schema/tx"
+             xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+                                 http://www.springframework.org/schema/beans/spring-beans.xsd
+                                 http://www.springframework.org/schema/tx
+                                 http://www.springframework.org/schema/tx/spring-tx.xsd
+                                 http://www.springframework.org/schema/data/jpa
+                                 http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+
+    <!-- Import DataSource configuration -->
+    <beans:import resource="context.xml"/>
+
+    <!-- JPA Vendor Adapter -->
+    <beans:bean id="jpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+        <!-- Configure your JPA vendor adapter here -->
+    </beans:bean>
+
+    <!-- EntityManagerFactory -->
+    <beans:bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <beans:property name="dataSource" ref="dataSource"/>
+        <beans:property name="jpaVendorAdapter" ref="jpaVendorAdapter"/>
+        <beans:property name="packagesToScan" value="com.Ejercicio3.model"/>
+        <!-- Additional configuration -->
+    </beans:bean>
+
+    <!-- Transaction Manager -->
+    
+    <beans:bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <beans:property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </beans:bean>
+
+    <!-- Enable annotation-driven transaction management -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!-- JPA repositories base package -->
+    <jpa:repositories base-package="com.Ejercicio3.repository.EmployeeRepository"/>
+</beans:beans>
