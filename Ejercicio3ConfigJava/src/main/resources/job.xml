@@ -1,0 +1,54 @@
+<beans:beans xmlns="http://www.springframework.org/schema/batch"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/batch
+           http://www.springframework.org/schema/batch/spring-batch-2.2.xsd">
+
+    <!-- Imports -->
+    <beans:import resource="context.xml" />
+    <beans:import resource="jpa.xml"/>
+
+    <!-- Definición del Job -->
+
+    <job id = "miJob">
+        <step id = "step1">
+            <tasklet>
+                <chunk reader = "itemReader" processor = "itemProcessor"
+                       writer = "itemWriter" commit-interval = "6"/>
+            </tasklet>
+        </step>
+    </job>
+
+    <!-- Definicion del Validator -->
+
+    <beans:bean id="validator"
+                class="com.Ejercicio3.itemProcessor.Validador">
+    </beans:bean>
+
+    <!-- Item processor compuesto: validator + customProcessor -->
+    
+    <beans:bean id="itemProcessor"
+                class="org.springframework.batch.item.support.CompositeItemProcessor">
+        <beans:property name="delegates">
+            <beans:list>
+                <beans:bean id="validatingItemProcessor" class="org.springframework.batch.item.validator.ValidatingItemProcessor">
+                    <beans:property name="filter" value="true" />
+                    <beans:property name="validator" ref="validator" />
+                </beans:bean>
+                <beans:bean id = "customItemProcessor" class = "com.Ejercicio3.itemProcessor.EmployeeProcesado"/>
+            </beans:list>
+        </beans:property>
+    </beans:bean>
+
+    <!-- Reader -->
+    <beans:bean id = "itemReader"
+                class = "com.Ejercicio3.itemReader.CustomReader">
+    </beans:bean>
+    
+    <!-- Writer (MySQL) -->
+    <beans:bean id = "itemWriter" class = "com.Ejercicio3.itemWriter.CustomWriter">
+    </beans:bean>
+</beans:beans>
